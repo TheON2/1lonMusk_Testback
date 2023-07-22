@@ -27,7 +27,7 @@ function extractKeywords(posts) {
   return topKeywords;
 }
 
-module.exports = function (app, UserReadArticle ,User,Like,Category,ArticleCategory,Article) {
+module.exports = function (app, UserReadArticle,User,Like,Article) {
   app.get('/api/search', async (req, res) => {
     const { q, page } = req.query;
     if (q) {

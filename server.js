@@ -11,8 +11,6 @@ const session = require("express-session");
 const Article = require('./models/article');
 const UserReadArticle = require('./models/userreadarticle');
 const Like = require('./models/like');
-const ArticleCategory = require('./models/articlecategory');
-const Category = require('./models/category');
 const User = require('./models/user');
 const path = require('path');
 const dotenv = require("dotenv");
@@ -49,7 +47,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error(err));
 app.use(passport.initialize());
 
-const routerNews = require('./routes/news')(app, Article,User,ArticleCategory,Category,UserReadArticle,Like);
+const routerNews = require('./routes/news')(app, Article,User,UserReadArticle,Like);
 const routerUser = require('./routes/user')(app, User);
 
 let server = app.listen(port, function () {
