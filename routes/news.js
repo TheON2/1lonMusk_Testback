@@ -50,7 +50,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
     }
   });
 
-  app.post('/api/main', async (req, res) => {
+  app.get('/api/main', async (req, res) => {
     const { page } = req.query;
     const limit = 12;
     const skip = (page - 1) * limit;
@@ -60,5 +60,31 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
+  });
+
+  const categories = ["테슬라", "트위터", "페이팔", "스페이스x", "X.AI", "도지코인", "뉴럴링크", "하이퍼루프", "솔라시티", "스타링크"];
+
+  app.get('/api/test/dummy', async (req, res) => {
+
+    async function createArticles(num) {
+      for (let i = 1; i <= num; i++) {
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const article = new Article({
+          id: i.toString(),
+          image_url: "https://avatars.githubusercontent.com/u/32028454?v=4",  // 직접 이미지 URL을 제공해야 합니다.
+          title: "Dummy article title " + i,
+          content: "This is a dummy article. This is content number " + i + ".",
+          category: category,
+          article_date: new Date().toISOString(),
+        });
+        await article.save();
+      }
+
+      console.log(`Successfully created ${num} articles.`);
+    }
+
+    createArticles(100).then(() => {
+      res.status(200).json({ message: "success" });
+    });
   });
 }

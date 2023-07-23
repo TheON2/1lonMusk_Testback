@@ -178,6 +178,7 @@ module.exports = function(app, User)
       if (exUser) {
         return res.status(403).send("이미 사용중인 아이디입니다");
       }
+      console.log(req.body)
     const hashedPassword = await bcrypt.hash(req.body.password, 12)
     const user = new User({
       email: req.body.email,
@@ -226,8 +227,8 @@ module.exports = function(app, User)
     })(req, res, next);
   });
 
-  app.post('/api/pwd/forgot', async (req, res) => {
-    const { email } = req.body;
+  app.get('/api/pwd/forgot/:email', async (req, res) => {
+    const { email } = req.params;
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
@@ -237,18 +238,30 @@ module.exports = function(app, User)
         "message": "User not found"
       });
     }
+
+    console.log(process.env.SEND_EMAIL_ID,process.env.SEND_EMAIL_PW)
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: "Naver",
       auth: {
         user: process.env.SEND_EMAIL_ID,
         pass: process.env.SEND_EMAIL_PW,
       },
     });
+    const payload = {
+      email,
+      exp: Math.floor(Date.now() / 1000) + (60 * 30), //토큰 유효기간 30분
+    };
+    const resignToken = jwt.sign(payload, process.env.JWT_SECRET);
+
+    const myUrl = `${process.env.ORIGIN}/newPassword/`;
+    const safeToken = encodeURIComponent(resignToken);
+    const finalUrl = `${myUrl}?token=${safeToken}`;
+
     const mailOptions = {
       from: process.env.SEND_EMAIL_ID,
       to: email,
       subject: "Reset Password Link",
-      text: "비밀번호 재설정 링크: http://localhost:3000/api/pwd/newPassword/" + user.email,
+      text: "비밀번호 재설정 링크:" + finalUrl,
     };
     transporter.sendMail(mailOptions, function(error, info){
       if (error) {
@@ -263,7 +276,10 @@ module.exports = function(app, User)
   app.post('/api/pwd/newPassword/:secretemail', async (req, res) => {
     const { secretemail } = req.params;
     const { password } = req.body;
-    const user = await User.findOne({ email: secretemail });
+    const decoded = jwt.verify(secretemail, process.env.JWT_SECRET);
+    console.log(secretemail,password,decoded.email)
+
+    const user = await User.findOne({ email: decoded.email });
     if (!user) {
       return res.status(404).json({
         "timestamp": new Date(),
@@ -275,7 +291,6 @@ module.exports = function(app, User)
     const hashedPassword = await bcrypt.hash(password, 10);
     user.password = hashedPassword;
     await user.save();
-
     res.status(200).json({ message: 'Password has been changed' });
   });
 

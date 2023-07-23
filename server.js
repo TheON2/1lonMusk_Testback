@@ -47,7 +47,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.error(err));
 app.use(passport.initialize());
 
-const routerNews = require('./routes/news')(app, Article,User,UserReadArticle,Like);
+const routerNews = require('./routes/news')(app, UserReadArticle,User,Like,Article);
 const routerUser = require('./routes/user')(app, User);
 
 let server = app.listen(port, function () {
