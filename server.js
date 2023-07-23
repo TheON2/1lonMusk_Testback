@@ -48,7 +48,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(passport.initialize());
 
 const routerNews = require('./routes/news')(app, UserReadArticle,User,Like,Article);
-const routerUser = require('./routes/user')(app, User);
+const routerUser = require('./routes/user')(app, User,UserReadArticle,Like);
 
 let server = app.listen(port, function () {
   console.log("Express server has started on port " + port)

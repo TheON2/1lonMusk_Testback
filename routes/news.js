@@ -55,7 +55,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
     const limit = 12;
     const skip = (page - 1) * limit;
     try {
-      const posts = await Article.find().sort({timestamp: -1}).skip(skip).limit(limit);
+      const posts = await Article.find().skip(skip).limit(limit);
       res.status(200).json({ result: posts });
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -71,7 +71,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
         const category = categories[Math.floor(Math.random() * categories.length)];
         const article = new Article({
           id: i.toString(),
-          image_url: "https://avatars.githubusercontent.com/u/32028454?v=4",  // 직접 이미지 URL을 제공해야 합니다.
+          image_url: "https://news.samsungdisplay.com/wp-content/uploads/2018/08/8.jpg",  // 직접 이미지 URL을 제공해야 합니다.
           title: "Dummy article title " + i,
           content: "This is a dummy article. This is content number " + i + ".",
           category: category,
@@ -79,10 +79,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
         });
         await article.save();
       }
-
-      console.log(`Successfully created ${num} articles.`);
     }
-
     createArticles(100).then(() => {
       res.status(200).json({ message: "success" });
     });

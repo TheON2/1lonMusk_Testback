@@ -9,7 +9,7 @@ const nodemailer = require("nodemailer");
 
 dotenv.config();
 
-module.exports = function(app, User)
+module.exports = function(app, User,UserReadArticle,Like)
 {
   app.get('/user/kakao', passport.authenticate('kakao', { authType: 'reprompt' }));
 
@@ -302,6 +302,26 @@ module.exports = function(app, User)
     });
   });
 
+  app.get('/api/user/read/:userEmail', async (req, res) => {
+    try {
+      const userEmail = req.params.userEmail;
+      const readArticles = await UserReadArticle.find({user_id: userEmail});
+      res.json(readArticles);
+    } catch (err) {
+      res.json({ message: err });
+    }
+  });
+
+  app.get('/api/user/like/:userEmail', async (req, res) => {
+    try {
+      const userEmail = req.params.userEmail;
+      const likedArticles = await Like.find({user_id: userEmail});
+      res.json(likedArticles);
+    } catch (err) {
+      res.json({ message: err });
+    }
+  });
+
   app.patch('/api/user/:email/nickName', auth, async (req, res) => {
     try {
       let user = await User.findOne({ email: req.params.email });
@@ -327,4 +347,5 @@ module.exports = function(app, User)
       res.status(500).json({ message: error.message });
     }
   });
+
 }
