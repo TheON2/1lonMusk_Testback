@@ -10,7 +10,7 @@ function extractKeywords(posts) {
   let keywordCounts = {};
 
   posts.forEach((post) => {
-    let words = post.title.split(" ");
+    let words = post.content.split(" ");
 
     words.forEach((word) => {
       if (keywordCounts[word]) {
