@@ -218,11 +218,11 @@ module.exports = function(app, User,UserReadArticle,Like)
           exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 1), // Refresh token valid for 1 days
         };
         const accesstoken = jwt.sign(payload, process.env.JWT_SECRET);
-        const refreshtoken = jwt.sign(refreshPayload, process.env.JWT_REFRESH_SECRET);
-        //res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'None', secure: true });
+        const refreshToken = jwt.sign(refreshPayload, process.env.JWT_REFRESH_SECRET);
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'None', secure: true });
         const userResponse = user.toObject();
         delete userResponse.password;
-        return res.status(200).json({ email:userResponse.email,nickname:userResponse.nickname, accesstoken,refreshtoken });
+        return res.status(200).json({ email:userResponse.email,nickname:userResponse.nickname, accesstoken });
       });
     })(req, res, next);
   });
