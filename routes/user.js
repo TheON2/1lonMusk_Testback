@@ -140,7 +140,7 @@ module.exports = function(app, User,UserReadArticle,Like)
       const userResponse = user.toObject();
       delete userResponse.password;
       console.log(userResponse)
-      return res.status(200).json({userResponse});
+      return res.status(200).json({email:userResponse.email, nickname:userResponse.nickname});
     } catch (error) {
       res.status(500).send(error);
     }

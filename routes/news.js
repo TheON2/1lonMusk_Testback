@@ -35,7 +35,10 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
       const skip = (page - 1) * limit;
       try {
         const posts = await Article.find({title: {$regex: q}}).sort({timestamp: -1}).skip(skip).limit(limit);
-        res.status(200).json({ result: posts });
+        const totalPosts = await Article.countDocuments({title: {$regex: q}});
+        const totalPages = Math.ceil(totalPosts / limit);
+
+        res.status(200).json({ content: posts, totalPages,totalElements: totalPosts });
       } catch (err) {
         res.status(500).json({ message: err.message });
       }
