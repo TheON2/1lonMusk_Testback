@@ -27,25 +27,25 @@ function extractKeywords(posts) {
   return topKeywords;
 }
 
-module.exports = function (app, UserReadArticle, User, Like, Article) {
+module.exports = function (app, UserReadArticle,User,Like,Article) {
   app.get('/api/search', async (req, res) => {
-    const {q, page} = req.query;
+    const { q, page } = req.query;
     if (q) {
       const limit = 12;
       const skip = (page - 1) * limit;
       try {
         const posts = await Article.find({title: {$regex: q}}).sort({timestamp: -1}).skip(skip).limit(limit);
-        res.status(200).json({result: posts});
+        res.status(200).json({ result: posts });
       } catch (err) {
-        res.status(500).json({message: err.message});
+        res.status(500).json({ message: err.message });
       }
     } else {
       try {
         const posts = await Article.find().sort({timestamp: -1}).limit(20);
         const keywords = extractKeywords(posts);
-        res.status(200).json({keyword: keywords});
+        res.status(200).json({ keyword: keywords });
       } catch (err) {
-        res.status(500).json({message: err.message});
+        res.status(500).json({ message: err.message });
       }
     }
   });
@@ -59,9 +59,9 @@ module.exports = function (app, UserReadArticle, User, Like, Article) {
       const totalPages = Math.ceil(totalPosts / limit);
       const posts = await Article.find().skip(skip).limit(limit);
 
-      res.status(200).json({content: posts, totalPages});
+      res.status(200).json({ content: posts, totalPages,totalElements: totalPosts });
     } catch (err) {
-      res.status(500).json({message: err.message});
+      res.status(500).json({ message: err.message });
     }
   });
 
@@ -72,49 +72,48 @@ module.exports = function (app, UserReadArticle, User, Like, Article) {
     try {
       const token = req.cookies.refreshToken;
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-      const likes = await Like.find({user_id: decoded.email});
+      const likes = await Like.find({ user_id: decoded.email });
 
       const likedArticleIds = likes.map(like => like.article_id);
 
-      const totalPosts = await Article.countDocuments();
+      const totalPosts = await Article.countDocuments({ '_id': { $in: likedArticleIds } });
       const totalPages = Math.ceil(totalPosts / limit);
 
-      const posts = await Article.find().skip(skip).limit(limit);
+      const posts = await Article.find({
+        '_id': { $in: likedArticleIds }
+      })
+        .select('_id title content image_url category articleDate') // 필요한 필드만 선택
+        .skip(skip).limit(limit);
 
-      res.status(200).json({content: posts, totalPages});
+      res.status(200).json({ content: posts, totalPages,totalElements: totalPosts });
     } catch (err) {
-      res.status(500).json({message: err.message});
+      res.status(500).json({ message: err.message });
     }
   });
 
   app.get('/api/reads', async (req, res) => {
-    const page = parseInt(req.query.page, 10) || 1; // Set a default page if not specified
+    const page = parseInt(req.query.page, 10);
     const limit = 12;
     const skip = (page - 1) * limit;
-
-    const token = req.cookies.refreshToken;
-
     try {
+      const token = req.cookies.refreshToken;
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-
-      const [reads, totalPosts] = await Promise.all([
-        UserReadArticle.find({user_id: decoded.email}),
-        Article.countDocuments(),
-      ]);
+      const reads = await UserReadArticle.find({ user_id: decoded.email });
 
       const readsArticleIds = reads.map(read => read.article_id);
 
+      const totalPosts = await Article.countDocuments({ '_id': { $in: readsArticleIds } });
       const totalPages = Math.ceil(totalPosts / limit);
 
-      const posts = await Article.find().skip(skip).limit(limit);
+      const posts = await Article.find({
+        '_id': { $in: readsArticleIds }
+      })
+        .select('_id title content image_url category articleDate') // 필요한 필드만 선택
+        .skip(skip).limit(limit);
 
-      res.status(200).json({content: posts, totalPages});
+      res.status(200).json({ content: posts, totalPages,totalElements: totalPosts });
     } catch (err) {
-      if (err.name === 'JsonWebTokenError') {
-        res.status(401).json({message: 'Invalid token'});
-      } else {
-        res.status(500).json({message: err.message});
-      }
+      res.status(500).json({ message: err.message });
     }
   });
 
@@ -136,9 +135,8 @@ module.exports = function (app, UserReadArticle, User, Like, Article) {
         await article.save();
       }
     }
-
     createArticles(100).then(() => {
-      res.status(200).json({message: "success"});
+      res.status(200).json({ message: "success" });
     });
   });
 }
