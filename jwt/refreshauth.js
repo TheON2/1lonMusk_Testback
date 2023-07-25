@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 function refreshauth(req, res, next) {
-  const token = req.cookies.refreshToken
+  const token = req.cookies.refreshToken.slice(7);
   if (!token) return res.status(501).send('Access denied. No token provided.');
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);

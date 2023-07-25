@@ -30,26 +30,25 @@ function extractKeywords(posts) {
 module.exports = function (app, UserReadArticle,User,Like,Article) {
   app.get('/api/search', async (req, res) => {
     const { q, page } = req.query;
-    if (q) {
       const limit = 12;
       const skip = (page - 1) * limit;
       try {
         const posts = await Article.find({content: {$regex: q}}).skip(skip).limit(limit);
         const totalPosts = await Article.countDocuments({content: {$regex: q}});
         const totalPages = Math.ceil(totalPosts / limit);
-
         res.status(200).json({ content: posts, totalPages,totalElements: totalPosts });
       } catch (err) {
         res.status(500).json({ message: err.message });
       }
-    } else {
-      try {
-        const posts = await Article.find().sort({timestamp: -1}).limit(20);
-        const keywords = extractKeywords(posts);
-        res.status(200).json({ keyword: keywords });
-      } catch (err) {
-        res.status(500).json({ message: err.message });
-      }
+  });
+
+  app.get('/api/keyword', async (req, res) => {
+    try {
+      const posts = await Article.find().sort({timestamp: -1}).limit(20);
+      const keywords = extractKeywords(posts);
+      res.status(200).json({ keyword: keywords });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
     }
   });
 
@@ -68,12 +67,61 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
     }
   });
 
+  app.get('/api/main/:id', async (req, res) => {
+    try {
+      const post = await Article.find({id:req.params.id}); // 데이터베이스에서 게시물을 찾습니다.
+      if (!post) {
+        return res.status(404).json({ message: "page does not exist." });
+      }
+      return res.status(200).json({ result:post });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get('/api/tag', async (req, res) => {
+    try {
+      const category = req.query.category;
+      const limit = 12;
+      const page = Number(req.query.page);
+      console.log(category,page);
+      console.log('진입함')
+
+      if (!category) {
+        return res.status(400).json({ status: 400, message: "Category is required." });
+      }
+
+      if (!page || page < 1) {
+        return res.status(400).json({ status: 400, message: "Invalid page number." });
+      }
+
+      const articles = await Article.find({ category })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec();
+
+      if (!articles.length) {
+        return res.status(404).json({ status: 404, message: "No articles found for this category or page." });
+      }
+
+      const totalPosts = await Article.countDocuments({category});
+      const totalPages = Math.ceil(totalPosts / limit);
+
+      res.status(200).json({ content: articles, totalPages, totalElements: totalPosts });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ status: 500, message: "Internal server error" });
+    }
+  });
+
   app.get('/api/likes', async (req, res) => {
     const page = parseInt(req.query.page, 10);
     const limit = 12;
     const skip = (page - 1) * limit;
     try {
-      const token = req.cookies.refreshToken;
+      const token = req.cookies.refreshToken.slice(7);
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
       const likes = await Like.find({ user_id: decoded.email });
 
@@ -99,7 +147,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
     const limit = 12;
     const skip = (page - 1) * limit;
     try {
-      const token = req.cookies.refreshToken;
+      const token = req.cookies.refreshToken.slice(7);
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
       const reads = await UserReadArticle.find({ user_id: decoded.email });
 
@@ -160,7 +208,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
     '\n' +
     '사람은 위하여, 예수는 우는 때문이다. 못하다 가치를 할지니, 같이, 무엇을 않는 위하여 유소년에게서 황금시대다. 사람은 날카로우나 인류의 할지라도 기쁘며, 끝까지 부패뿐이다. 아니한 너의 새가 피부가 때까지 할지니, 그것을 위하여 뿐이다. 동력은 심장의 가는 간에 인간이 역사를 생의 이상의 것이다. 보는 주는 위하여서, 오아이스도 인간은 예수는 소리다.이것은 바로 곧 부패뿐이다. 가치를 같은 그들은 보내는 간에 못하다 이상의 뜨거운지라, 꽃이 힘있다. 방지하는 타오르고 아니더면, 이는 때문이다. 인간의 이상의 위하여 살 목숨을 원대하고, 수 품에 그들은 것이다. 긴지라 청춘 뼈 듣는다.'
   const words = longSentence.split(' ');
-  const categories = ["테슬라", "트위터", "페이팔", "스페이스x", "X.AI", "도지코인", "뉴럴링크", "하이퍼루프", "솔라시티", "스타링크"];
+  const categories = ["tesla", "twitter", "paypal", "spaceX", "XAI", "doji", "neuralLink", "hyperloop", "solarcity", "starlink"];
 
   function getRandomContent(words, numWords) {
     let content = '';

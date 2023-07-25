@@ -153,8 +153,9 @@ module.exports = function(app, User,UserReadArticle,Like)
         email: req.user.email,
         exp: Math.floor(Date.now() / 1000) + (60 * 30), //토큰 유효기간 30분
       };
-      const accesstoken = jwt.sign(payload, process.env.JWT_SECRET);
-      return res.status(200).json({accesstoken});
+      const accessToken = jwt.sign(payload, process.env.JWT_SECRET);
+      res.cookie('accessToken', 'Bearer ' + accessToken, { httpOnly: true, sameSite: 'None', secure: true });
+      return res.status(200);
     } catch (error) {
       res.status(500).send(error);
     }
@@ -217,12 +218,13 @@ module.exports = function(app, User,UserReadArticle,Like)
           email: user.email,
           exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 1), // Refresh token valid for 1 days
         };
-        const accesstoken = jwt.sign(payload, process.env.JWT_SECRET);
+        const accessToken = jwt.sign(payload, process.env.JWT_SECRET);
         const refreshToken = jwt.sign(refreshPayload, process.env.JWT_REFRESH_SECRET);
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'None', secure: true });
+        res.cookie('refreshToken', 'Bearer ' + refreshToken, { httpOnly: true, sameSite: 'None', secure: true });
+        res.cookie('accessToken', 'Bearer ' + accessToken, { httpOnly: true, sameSite: 'None', secure: true });
         const userResponse = user.toObject();
         delete userResponse.password;
-        return res.status(200).json({ email:userResponse.email,nickname:userResponse.nickname, accesstoken });
+        return res.status(200).json({ email:userResponse.email,nickname:userResponse.nickname });
       });
     })(req, res, next);
   });
@@ -298,6 +300,7 @@ module.exports = function(app, User,UserReadArticle,Like)
     req.logout(() => {
       req.session.destroy();
       res.cookie('refreshToken', '', { expires: new Date(0), httpOnly: true, sameSite: 'None', secure: true });
+      res.cookie('accessToken', '', { expires: new Date(0), httpOnly: true, sameSite: 'None', secure: true });
       res.send("ok");
     });
   });
