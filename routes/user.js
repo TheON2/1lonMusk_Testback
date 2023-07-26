@@ -308,7 +308,7 @@ module.exports = function(app, User,UserReadArticle,Like)
   app.get('/api/user/read/:userEmail', async (req, res) => {
     try {
       const userEmail = req.params.userEmail;
-      const readArticles = await UserReadArticle.find({user_id: userEmail});
+      const readArticles = await UserReadArticle.countDocuments({user_id: userEmail});
       res.json(readArticles);
     } catch (err) {
       res.json({ message: err });
@@ -318,7 +318,7 @@ module.exports = function(app, User,UserReadArticle,Like)
   app.get('/api/user/like/:userEmail', async (req, res) => {
     try {
       const userEmail = req.params.userEmail;
-      const likedArticles = await Like.find({user_id: userEmail});
+      const likedArticles = await Like.countDocuments({user_id: userEmail});
       res.json(likedArticles);
     } catch (err) {
       res.json({ message: err });

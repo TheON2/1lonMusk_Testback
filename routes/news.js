@@ -69,7 +69,7 @@ module.exports = function (app, UserReadArticle,User,Like,Article) {
 
   app.get('/api/main/:id', async (req, res) => {
     try {
-      const post = await Article.find({id:req.params.id}); // 데이터베이스에서 게시물을 찾습니다.
+      const post = await Article.findOne({id:req.params.id}); // 데이터베이스에서 게시물을 찾습니다.
       if (!post) {
         return res.status(404).json({ message: "page does not exist." });
       }
